@@ -25,9 +25,7 @@ func (controller *authorController) CreateAuthor(c *fiber.Ctx) error {
 		res := response.CreateError(400, err)
 		return c.JSON(res)
 	}
-	author := model.Author{
-		Name: dto.Name,
-	}
+	author := model.NewAuthor(dto.Name)
 	db.Db.Create(&author)
 	return c.JSON(dto)
 }

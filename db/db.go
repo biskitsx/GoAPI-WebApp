@@ -22,7 +22,7 @@ func ConnectDb() {
 
 	fmt.Println("connected to database")
 
-	err = Db.AutoMigrate(&model.Author{}, &model.Book{}, &model.Category{})
+	err = Db.AutoMigrate(&model.Author{}, &model.Book{}, &model.Category{}, &model.User{})
 	if err != nil {
 		fmt.Println("can't migrate")
 		return
