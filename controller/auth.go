@@ -6,7 +6,7 @@ import (
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
-	response "www.github.com/biskitsx/go-api/webapp-sample/utils"
+	"www.github.com/biskitsx/go-api/webapp-sample/utils"
 )
 
 type AuthController interface {
@@ -24,13 +24,13 @@ func NewAuthController() AuthController {
 func (controller *authController) Signup(c *fiber.Ctx) error {
 	dto := dto.NewUserDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := response.CreateError(400, err)
+		res := utils.CreateError(400, err)
 		return c.JSON(res)
 	}
 
 	// validate input
 	if dto.Username == "" || dto.Password == "" {
-		res := response.CreateError(400, "all field is required")
+		res := utils.CreateError(400, "all field is required")
 		return c.JSON(res)
 	}
 
@@ -38,7 +38,7 @@ func (controller *authController) Signup(c *fiber.Ctx) error {
 	user := model.User{}
 	db.Db.First(&user, "username = ?", dto.Username)
 	if user.Username != "" {
-		res := response.CreateError(400, "this username already signed up")
+		res := utils.CreateError(400, "this username already signed up")
 		return c.JSON(res)
 	}
 
@@ -54,13 +54,13 @@ func (controller *authController) Signup(c *fiber.Ctx) error {
 func (controller *authController) Signin(c *fiber.Ctx) error {
 	dto := dto.NewUserDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := response.CreateError(400, err)
+		res := utils.CreateError(400, err)
 		return c.JSON(res)
 	}
 
 	// validate input
 	if dto.Username == "" || dto.Password == "" {
-		res := response.CreateError(400, "all field is required")
+		res := utils.CreateError(400, "all field is required")
 		return c.JSON(res)
 	}
 
@@ -68,14 +68,23 @@ func (controller *authController) Signin(c *fiber.Ctx) error {
 	user := model.User{}
 	db.Db.First(&user, "username = ?", dto.Username)
 	if user.Username == "" {
-		res := response.CreateError(400, "wrong email")
+		res := utils.CreateError(400, "wrong email")
 		return c.JSON(res)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-		res := response.CreateError(400, "wrong password")
+		res := utils.CreateError(400, "wrong password")
 		return c.JSON(res)
 	}
+
+	// token & cookie
+	tokenManager := utils.NewTokenManager()
+	token, _ := tokenManager.CreateToken(user.ID)
+	cookieToken := &fiber.Cookie{
+		Name:  "access_token",
+		Value: token,
+	}
+	c.Cookie(cookieToken)
 
 	return c.JSON(fiber.Map{
 		"login": "successfully",

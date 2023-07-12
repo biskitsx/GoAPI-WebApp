@@ -5,7 +5,7 @@ import (
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
-	response "www.github.com/biskitsx/go-api/webapp-sample/utils"
+	"www.github.com/biskitsx/go-api/webapp-sample/utils"
 )
 
 type CategoryController interface {
@@ -23,7 +23,7 @@ func NewCategoryController() CategoryController {
 func (controller *categoryController) CreateCategory(c *fiber.Ctx) error {
 	dto := dto.NewCategoryDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := response.CreateError(400, err)
+		res := utils.CreateError(400, err)
 		return c.JSON(res)
 	}
 	category := model.NewCategory(dto.Name)

@@ -7,11 +7,12 @@ import (
 )
 
 type UserController interface {
+	GetUser(c *fiber.Ctx) error
 }
 type userController struct {
 }
 
-func NewUserController() *userController {
+func NewUserController() UserController {
 	return &userController{}
 }
 
