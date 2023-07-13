@@ -24,22 +24,19 @@ func NewAuthController() AuthController {
 func (controller *authController) Signup(c *fiber.Ctx) error {
 	dto := dto.NewUserDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := utils.CreateError(400, err)
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// validate input
 	if dto.Username == "" || dto.Password == "" {
-		res := utils.CreateError(400, "all field is required")
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, "All field is required")
 	}
 
 	// find if the username already exists
 	user := model.User{}
 	db.Db.First(&user, "username = ?", dto.Username)
 	if user.Username != "" {
-		res := utils.CreateError(400, "this username already signed up")
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, "this username already signed up")
 	}
 
 	// hashing password
@@ -54,27 +51,24 @@ func (controller *authController) Signup(c *fiber.Ctx) error {
 func (controller *authController) Signin(c *fiber.Ctx) error {
 	dto := dto.NewUserDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := utils.CreateError(400, err)
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// validate input
 	if dto.Username == "" || dto.Password == "" {
-		res := utils.CreateError(400, "all field is required")
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, "All field is required")
 	}
 
 	// find if the username already exists
 	user := model.User{}
 	db.Db.First(&user, "username = ?", dto.Username)
 	if user.Username == "" {
-		res := utils.CreateError(400, "wrong email")
-		return c.JSON(res)
+
+		return fiber.NewError(fiber.StatusBadRequest, "Wrong username")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-		res := utils.CreateError(400, "wrong password")
-		return c.JSON(res)
+		return fiber.NewError(fiber.StatusBadRequest, "Wrong password")
 	}
 
 	// token & cookie

@@ -6,7 +6,6 @@ type User struct {
 	Password string `json:"password"`
 	// Books    []Book `gorm:"foreignKey:BookID"json:"books"`
 	Books []Book `gorm:"many2many:user_books" json:"books"`
-
 	// BooksID  []uint  `json:"booksId"`
 }
 

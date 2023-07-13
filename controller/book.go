@@ -11,6 +11,7 @@ import (
 type BookController interface {
 	CreateBook(c *fiber.Ctx) error
 	GetBooks(c *fiber.Ctx) error
+	AddBookToUser(c *fiber.Ctx) error
 }
 
 type bookController struct{}
@@ -35,4 +36,25 @@ func (controller *bookController) GetBooks(c *fiber.Ctx) error {
 	// mode
 	db.Db.Preload("Category").Preload("Author").Find(books)
 	return c.JSON(books)
+}
+
+func (controller *bookController) AddBookToUser(c *fiber.Ctx) error {
+	// find book
+	bookId, err := c.ParamsInt("id")
+	book := model.Book{}
+	db.Db.First(&book, "id = ?", bookId)
+	if err != nil {
+		return fiber.NewError(400, "invalid param")
+	}
+
+	// find user
+	userId := c.Locals("userId")
+	user := model.User{}
+	db.Db.First(&user, "id = ?", userId)
+
+	// add book
+	user.Books = append(user.Books, book)
+	db.Db.Preload("Books").Save(&user)
+
+	return c.JSON(user)
 }

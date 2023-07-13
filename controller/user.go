@@ -8,6 +8,7 @@ import (
 
 type UserController interface {
 	GetUser(c *fiber.Ctx) error
+	GetUserById(c *fiber.Ctx) error
 }
 type userController struct {
 }
@@ -20,4 +21,11 @@ func (controller *userController) GetUser(c *fiber.Ctx) error {
 	users := &[]model.User{}
 	db.Db.Preload("Books").Find(&users)
 	return c.JSON(users)
+}
+
+func (controller *userController) GetUserById(c *fiber.Ctx) error {
+	user := &model.User{}
+	userId, _ := c.ParamsInt("id")
+	db.Db.Preload("Books").First(&user, "id = ?", userId)
+	return c.JSON(user)
 }

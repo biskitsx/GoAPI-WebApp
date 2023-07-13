@@ -1,11 +1,12 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
-	response "www.github.com/biskitsx/go-api/webapp-sample/utils"
 )
 
 type AuthorController interface {
@@ -22,8 +23,7 @@ func NewAuthorController() AuthorController {
 func (controller *authorController) CreateAuthor(c *fiber.Ctx) error {
 	dto := dto.NewAuthorDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := response.CreateError(400, err)
-		return c.JSON(res)
+		return fiber.NewError(400, err.Error())
 	}
 	author := model.NewAuthor(dto.Name)
 	db.Db.Create(&author)
@@ -33,5 +33,6 @@ func (controller *authorController) CreateAuthor(c *fiber.Ctx) error {
 func (controller *authorController) GetAuthors(c *fiber.Ctx) error {
 	authors := new([]model.Author)
 	db.Db.Find(authors)
+	fmt.Println(c.Locals("userId"))
 	return c.JSON(authors)
 }
