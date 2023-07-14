@@ -1,0 +1,89 @@
+definitions:
+  dto.BookDto:
+    properties:
+      authorId:
+        type: integer
+      categoryId:
+        type: integer
+      price:
+        type: integer
+      title:
+        type: string
+    type: object
+  model.Author:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.Book:
+    properties:
+      author:
+        $ref: '#/definitions/model.Author'
+      authorId:
+        type: integer
+      category:
+        $ref: '#/definitions/model.Category'
+      categoryId:
+        type: integer
+      id:
+        type: integer
+      price:
+        type: integer
+      title:
+        type: string
+    type: object
+  model.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+host: localhost:3000/api
+info:
+  contact: {}
+  description: A API for fiber framework
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /book:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all books
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Book'
+            type: array
+      summary: Get all books
+      tags:
+      - Books
+    post:
+      consumes:
+      - application/json
+      description: Create a new book record in the database
+      parameters:
+      - description: Book data
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BookDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Book'
+      summary: Create a new book
+      tags:
+      - Books
+swagger: "2.0"
