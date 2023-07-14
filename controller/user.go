@@ -9,6 +9,8 @@ import (
 type UserController interface {
 	GetUser(c *fiber.Ctx) error
 	GetUserById(c *fiber.Ctx) error
+	DeleteUserById(c *fiber.Ctx) error
+	UpdateUserById(c *fiber.Ctx) error
 }
 type userController struct {
 }
@@ -28,4 +30,22 @@ func (controller *userController) GetUserById(c *fiber.Ctx) error {
 	userId, _ := c.ParamsInt("id")
 	db.Db.Preload("Books").First(&user, "id = ?", userId)
 	return c.JSON(user)
+}
+
+func (controller *userController) DeleteUserById(c *fiber.Ctx) error {
+	user := &model.User{}
+	userId, _ := c.ParamsInt("id")
+	db.Db.Delete(&user, "id = ?", userId)
+	return c.JSON(fiber.Map{
+		"msg": "delete successfully",
+	})
+}
+
+func (controller *userController) UpdateUserById(c *fiber.Ctx) error {
+	user := &model.User{}
+	userId, _ := c.ParamsInt("id")
+	db.Db.First(&user, "id = ?", userId)
+	return c.JSON(fiber.Map{
+		"msg": "delete successfully",
+	})
 }

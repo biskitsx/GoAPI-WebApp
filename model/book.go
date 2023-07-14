@@ -18,7 +18,3 @@ func NewBook(title string, categoryId uint, authorId uint, price uint) *Book {
 		Price:      price,
 	}
 }
-
-// func (b *Book) FindAll() ([]Book, error) {
-
-// }

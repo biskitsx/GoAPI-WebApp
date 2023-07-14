@@ -5,13 +5,13 @@ import (
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
-	response "www.github.com/biskitsx/go-api/webapp-sample/utils"
 )
 
 type BookController interface {
 	CreateBook(c *fiber.Ctx) error
 	GetBooks(c *fiber.Ctx) error
 	AddBookToUser(c *fiber.Ctx) error
+	RemoveBookFromUser(c *fiber.Ctx) error
 }
 
 type bookController struct{}
@@ -23,8 +23,7 @@ func NewBookController() BookController {
 func (controller *bookController) CreateBook(c *fiber.Ctx) error {
 	dto := dto.NewBookDto()
 	if err := c.BodyParser(dto); err != nil {
-		res := response.CreateError(400, err)
-		return c.JSON(res)
+		return fiber.NewError(400, "error")
 	}
 	book := model.NewBook(dto.Title, dto.CategoryID, dto.AuthorID, dto.Price)
 	db.Db.Create(&book)
@@ -50,11 +49,31 @@ func (controller *bookController) AddBookToUser(c *fiber.Ctx) error {
 	// find user
 	userId := c.Locals("userId")
 	user := model.User{}
-	db.Db.First(&user, "id = ?", userId)
 
 	// add book
-	user.Books = append(user.Books, book)
-	db.Db.Preload("Books").Save(&user)
+	db.Db.First(&user, "id = ?", userId).Association("Books").Append(&book)
+
+	return c.JSON(user)
+}
+
+func (controller *bookController) RemoveBookFromUser(c *fiber.Ctx) error {
+	// Find book
+	bookID, err := c.ParamsInt("id")
+	if err != nil {
+		return fiber.NewError(400, "invalid param")
+	}
+
+	book := model.Book{}
+	db.Db.First(&book, "id = ?", bookID)
+
+	// Find user
+	userID := c.Locals("userId")
+	user := model.User{}
+
+	db.Db.First(&user, "id = ?", userID)
+
+	// Remove book
+	db.Db.Model(&user).Association("Books").Delete(&book)
 
 	return c.JSON(user)
 }

@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 	"www.github.com/biskitsx/go-api/webapp-sample/controller"
 	"www.github.com/biskitsx/go-api/webapp-sample/middleware"
 )
@@ -13,6 +14,9 @@ func Init(app *fiber.App) {
 		// For more options, see the Config section
 		Format: "${pid} ${locals:requestid} ${status} - ${method} ${path}​\n",
 	}))
+
+	// add swagger
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	authorRoutes(app)
 	categoryRoutes(app)
@@ -38,6 +42,7 @@ func bookRoutes(app *fiber.App) {
 	app.Get("/api/book", book.GetBooks)
 	app.Post("/api/book", book.CreateBook)
 	app.Post("/api/book/add/:id", middleware.VerifyUser, book.AddBookToUser)
+	app.Delete("/api/book/remove/:id", middleware.VerifyUser, book.RemoveBookFromUser)
 }
 
 func authRoutes(app *fiber.App) {
