@@ -15,9 +15,15 @@ git clone https://github.com/biskitsx/GoAPI-WebApp.git
 ## Usage
 
 1. Navigate to the project direcotry:
-``` cd <your-repo> ```
-2. Install the project dependencies:
-``` go mode download ```
+```
+cd <your-repo>
+```
+3. Install the project dependencies:
+```
+go mode download
+```
 
-3. Build and run the application:
-``` go run main.go ```
+5. Build and run the application:
+```
+go run main.go
+```
