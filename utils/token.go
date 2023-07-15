@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"os"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -12,10 +13,11 @@ type TokenManager interface {
 }
 
 type tokenManager struct {
+	JWT string
 }
 
 func NewTokenManager() TokenManager {
-	return &tokenManager{}
+	return &tokenManager{JWT: os.Getenv("JWT")}
 }
 
 func (t *tokenManager) CreateToken(id uint) (string, error) {
@@ -23,7 +25,7 @@ func (t *tokenManager) CreateToken(id uint) (string, error) {
 		"id": id,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-	signedToken, err := token.SignedString([]byte("secret"))
+	signedToken, err := token.SignedString([]byte(t.JWT))
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +34,7 @@ func (t *tokenManager) CreateToken(id uint) (string, error) {
 
 func (t *tokenManager) VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil // Replace "secret" with your actual secret key
+		return []byte(t.JWT), nil // Replace "secret" with your actual secret key
 	})
 
 	if err != nil {

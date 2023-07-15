@@ -2,12 +2,13 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"www.github.com/biskitsx/go-api/webapp-sample/config"
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	_ "www.github.com/biskitsx/go-api/webapp-sample/docs"
 	_ "www.github.com/biskitsx/go-api/webapp-sample/model"
 	_ "www.github.com/biskitsx/go-api/webapp-sample/model/dto"
-	"www.github.com/biskitsx/go-api/webapp-sample/routes"
+	"www.github.com/biskitsx/go-api/webapp-sample/router"
 )
 
 // @title Swagger Example API
@@ -20,8 +21,8 @@ func main() {
 		ErrorHandler: config.CustomErrorHandler,
 	})
 
+	godotenv.Load()
 	db.ConnectDb()
-
-	routes.Init(app)
+	router.Init(app)
 	app.Listen(":3000")
 }

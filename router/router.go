@@ -1,4 +1,4 @@
-package routes
+package router
 
 import (
 	"github.com/gofiber/fiber/v2"
@@ -34,6 +34,7 @@ func authorRoutes(app *fiber.App) {
 func categoryRoutes(app *fiber.App) {
 	category := controller.NewCategoryController()
 	app.Get("/api/category", category.GetCategory)
+	app.Get("/api/category/:id", category.GetCategoryById)
 	app.Post("/api/category", category.CreateCategory)
 }
 

@@ -5,6 +5,7 @@ import (
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
+	"www.github.com/biskitsx/go-api/webapp-sample/service"
 )
 
 type BookController interface {
@@ -14,66 +15,71 @@ type BookController interface {
 	RemoveBookFromUser(c *fiber.Ctx) error
 }
 
-type bookController struct{}
+type bookController struct {
+	service service.BookService
+}
 
 func NewBookController() BookController {
-	return &bookController{}
+	return &bookController{
+		service: service.NewBookService(),
+	}
 }
 
 func (controller *bookController) CreateBook(c *fiber.Ctx) error {
 	dto := dto.NewBookDto()
 	if err := c.BodyParser(dto); err != nil {
-		return fiber.NewError(400, "error")
+		return fiber.NewError(405, "error")
 	}
-	book := model.NewBook(dto.Title, dto.CategoryID, dto.AuthorID, dto.Price)
-	db.Db.Create(&book)
+	book, err := controller.service.Create(dto)
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 	return c.JSON(book)
 }
 
 func (controller *bookController) GetBooks(c *fiber.Ctx) error {
-	books := new([]model.Book)
-	// mode
-	db.Db.Preload("Category").Preload("Author").Find(books)
+	books := controller.service.FindAll()
 	return c.JSON(books)
 }
 
 func (controller *bookController) AddBookToUser(c *fiber.Ctx) error {
 	// find book
 	bookId, err := c.ParamsInt("id")
-	book := model.Book{}
-	db.Db.First(&book, "id = ?", bookId)
 	if err != nil {
 		return fiber.NewError(400, "invalid param")
+	}
+	book, err := controller.service.FindById(bookId)
+	if err != nil {
+		return fiber.NewError(400, err.Error())
 	}
 
 	// find user
 	userId := c.Locals("userId")
-	user := model.User{}
+	user := new(model.User)
+	db.Db.First(user, "id = ?", userId)
 
 	// add book
-	db.Db.First(&user, "id = ?", userId).Association("Books").Append(&book)
-
+	controller.service.AddBook(user, book)
 	return c.JSON(user)
 }
 
 func (controller *bookController) RemoveBookFromUser(c *fiber.Ctx) error {
-	// Find book
-	bookID, err := c.ParamsInt("id")
+	// find book
+	bookId, err := c.ParamsInt("id")
 	if err != nil {
 		return fiber.NewError(400, "invalid param")
 	}
+	book, err := controller.service.FindById(bookId)
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 
-	book := model.Book{}
-	db.Db.First(&book, "id = ?", bookID)
+	// find user
+	userId := c.Locals("userId")
+	user := new(model.User)
+	db.Db.First(user, "id = ?", userId)
 
-	// Find user
-	userID := c.Locals("userId")
-	user := model.User{}
-
-	db.Db.First(&user, "id = ?", userID)
-
-	// Remove book
-	db.Db.Model(&user).Association("Books").Delete(&book)
-
+	// add book
+	controller.service.RemoveBook(user, book)
 	return c.JSON(user)
 }
