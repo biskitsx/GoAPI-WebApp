@@ -2,8 +2,6 @@ package controller
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"www.github.com/biskitsx/go-api/webapp-sample/db"
-	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
 	"www.github.com/biskitsx/go-api/webapp-sample/service"
 )
@@ -16,12 +14,14 @@ type BookController interface {
 }
 
 type bookController struct {
-	service service.BookService
+	service     service.BookService
+	userService service.UserService
 }
 
 func NewBookController() BookController {
 	return &bookController{
-		service: service.NewBookService(),
+		service:     service.NewBookService(),
+		userService: service.NewUserService(),
 	}
 }
 
@@ -46,17 +46,20 @@ func (controller *bookController) AddBookToUser(c *fiber.Ctx) error {
 	// find book
 	bookId, err := c.ParamsInt("id")
 	if err != nil {
-		return fiber.NewError(400, "invalid param")
+		return fiber.NewError(400, err.Error())
 	}
+
 	book, err := controller.service.FindById(bookId)
 	if err != nil {
 		return fiber.NewError(400, err.Error())
 	}
 
 	// find user
-	userId := c.Locals("userId")
-	user := new(model.User)
-	db.Db.First(user, "id = ?", userId)
+	userId, _ := c.Locals("userId").(float64)
+	user, err := controller.userService.FindById(int(userId))
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 
 	// add book
 	controller.service.AddBook(user, book)
@@ -75,10 +78,11 @@ func (controller *bookController) RemoveBookFromUser(c *fiber.Ctx) error {
 	}
 
 	// find user
-	userId := c.Locals("userId")
-	user := new(model.User)
-	db.Db.First(user, "id = ?", userId)
-
+	userId, _ := c.Locals("userId").(float64)
+	user, err := controller.userService.FindById(int(userId))
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 	// add book
 	controller.service.RemoveBook(user, book)
 	return c.JSON(user)

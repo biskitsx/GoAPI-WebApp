@@ -19,7 +19,7 @@ func VerifyUser(c *fiber.Ctx) error {
 
 	id, ok := payload["id"].(float64)
 	if !ok {
-		return fiber.NewError(fiber.StatusConflict, "float64 error")
+		return fiber.NewError(fiber.StatusConflict, "int error")
 	}
 	c.Locals("userId", id)
 	return c.Next()

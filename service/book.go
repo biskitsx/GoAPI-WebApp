@@ -53,5 +53,5 @@ func (service *bookService) AddBook(user *model.User, book *model.Book) {
 }
 
 func (service *bookService) RemoveBook(user *model.User, book *model.Book) {
-	db.Db.First(user).Association("Books").Delete(book)
+	db.Db.Model(user).Association("Books").Delete(book)
 }

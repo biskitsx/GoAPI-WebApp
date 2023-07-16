@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"www.github.com/biskitsx/go-api/webapp-sample/db"
 	"www.github.com/biskitsx/go-api/webapp-sample/model"
+	"www.github.com/biskitsx/go-api/webapp-sample/service"
 )
 
 type UserController interface {
@@ -13,29 +14,33 @@ type UserController interface {
 	UpdateUserById(c *fiber.Ctx) error
 }
 type userController struct {
+	service service.UserService
 }
 
 func NewUserController() UserController {
-	return &userController{}
+	return &userController{service: service.NewUserService()}
 }
 
 func (controller *userController) GetUser(c *fiber.Ctx) error {
-	users := &[]model.User{}
-	db.Db.Preload("Books").Find(&users)
+	users := controller.service.FindAll()
 	return c.JSON(users)
 }
 
 func (controller *userController) GetUserById(c *fiber.Ctx) error {
-	user := &model.User{}
 	userId, _ := c.ParamsInt("id")
-	db.Db.Preload("Books").First(&user, "id = ?", userId)
+	user, err := controller.service.FindById(userId)
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 	return c.JSON(user)
 }
 
 func (controller *userController) DeleteUserById(c *fiber.Ctx) error {
-	user := &model.User{}
 	userId, _ := c.ParamsInt("id")
-	db.Db.Delete(&user, "id = ?", userId)
+	_, err := controller.service.DeleteById(userId)
+	if err != nil {
+		return fiber.NewError(400, err.Error())
+	}
 	return c.JSON(fiber.Map{
 		"msg": "delete successfully",
 	})
@@ -46,6 +51,6 @@ func (controller *userController) UpdateUserById(c *fiber.Ctx) error {
 	userId, _ := c.ParamsInt("id")
 	db.Db.First(&user, "id = ?", userId)
 	return c.JSON(fiber.Map{
-		"msg": "delete successfully",
+		"msg": "update successfully",
 	})
 }

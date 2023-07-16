@@ -2,10 +2,8 @@ package controller
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
-	"www.github.com/biskitsx/go-api/webapp-sample/db"
-	"www.github.com/biskitsx/go-api/webapp-sample/model"
 	"www.github.com/biskitsx/go-api/webapp-sample/model/dto"
+	"www.github.com/biskitsx/go-api/webapp-sample/service"
 	"www.github.com/biskitsx/go-api/webapp-sample/utils"
 )
 
@@ -15,10 +13,15 @@ type AuthController interface {
 }
 
 type authController struct {
+	service     service.AuthService
+	userService service.UserService
 }
 
 func NewAuthController() AuthController {
-	return &authController{}
+	return &authController{
+		service:     service.NewAuthService(),
+		userService: service.NewUserService(),
+	}
 }
 
 func (controller *authController) Signup(c *fiber.Ctx) error {
@@ -28,23 +31,18 @@ func (controller *authController) Signup(c *fiber.Ctx) error {
 	}
 
 	// validate input
-	if dto.Username == "" || dto.Password == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "All field is required")
+	if err := dto.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// find if the username already exists
-	user := model.User{}
-	db.Db.First(&user, "username = ?", dto.Username)
-	if user.Username != "" {
-		return fiber.NewError(fiber.StatusBadRequest, "this username already signed up")
+	_, err := controller.userService.FindByUsername(dto.Username)
+	if err == nil { // user was found
+		return fiber.NewError(fiber.StatusBadRequest, "this username already registerd")
 	}
 
 	// hashing password
-	hash, _ := bcrypt.GenerateFromPassword([]byte(dto.Password), 10)
-	user.Username = dto.Username
-	user.Password = string(hash)
-	db.Db.Create(&user)
-
+	user := controller.service.Register(dto.Username, dto.Password)
 	return c.JSON(user)
 }
 
@@ -55,20 +53,18 @@ func (controller *authController) Signin(c *fiber.Ctx) error {
 	}
 
 	// validate input
-	if dto.Username == "" || dto.Password == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "All field is required")
+	if err := dto.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	// find if the username already exists
-	user := model.User{}
-	db.Db.First(&user, "username = ?", dto.Username)
-	if user.Username == "" {
-
-		return fiber.NewError(fiber.StatusBadRequest, "Wrong username")
+	user, err := controller.userService.FindByUsername(dto.Username)
+	if err != nil { // user wasn't found
+		return fiber.NewError(fiber.StatusBadRequest, "this username already registerd")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Wrong password")
+	if err := controller.service.Authenticate(user.Password, dto.Password); err != nil {
+		return fiber.NewError(401, err.Error())
 	}
 
 	// token & cookie
